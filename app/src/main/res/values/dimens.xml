@@ -1,0 +1,5 @@
+<resources>
+    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="title_appbar">30dp</dimen>
+    <dimen name="fragments_footer">20dp</dimen>
+</resources>

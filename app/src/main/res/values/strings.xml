@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">Lumen</string>
+    <string name="app_name_lowercase">lumen</string>
+    <string name="onboarding">your interests</string>
+    <string name="pick_topics">Pick topics to follow (at least 1)</string>
+    <string name="topics">TOPICS</string>
+    <string name="sources">SOURCES</string>
+    <string name="technology">Technology</string>
+    <string name="science">Science</string>
+    <string name="politics">Politics</string>
+    <string name="world">World</string>
+    <string name="business">Business</string>
+    <string name="health">Health</string>
+    <string name="climate">Climate</string>
+    <string name="sport">Sport</string>
+    <string name="action_settings">Settings</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="title_activity_main">MainActivity</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="feed">Feed</string>
+    <string name="stories">Stories</string>
+    <string name="stats">Stats</string>
+</resources>
