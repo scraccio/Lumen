@@ -16,7 +16,7 @@ class SplashActivity : AppCompatActivity() {
         Handler(Looper.getMainLooper()).postDelayed({
             val prefs = getSharedPreferences("lumen", MODE_PRIVATE)
 
-            if (prefs.getBoolean("onboarding_done", true)) {
+            if (prefs.getBoolean("onboarding_done", false)) {
                 startActivity(Intent(this, MainActivity::class.java))
             } else {
                 startActivity(Intent(this, OnboardingActivity::class.java))
