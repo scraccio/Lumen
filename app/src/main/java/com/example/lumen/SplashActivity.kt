@@ -14,13 +14,14 @@ class SplashActivity : AppCompatActivity() {
         setContentView(R.layout.activity_splash)
 
         Handler(Looper.getMainLooper()).postDelayed({
-            val prefs = getSharedPreferences("lumen", MODE_PRIVATE)
-
-            if (prefs.getBoolean("onboarding_done", false)) {
-                startActivity(Intent(this, MainActivity::class.java))
-            } else {
-                startActivity(Intent(this, OnboardingActivity::class.java))
-            }
+//            val prefs = getSharedPreferences("lumen", MODE_PRIVATE)
+//
+//            if (prefs.getBoolean("onboarding_done", false)) {
+//                startActivity(Intent(this, MainActivity::class.java))
+//            } else {
+//                startActivity(Intent(this, OnboardingActivity::class.java))
+//            }
+            startActivity(Intent(this, MainActivity::class.java))
 
             finish()
         }, 1500)
