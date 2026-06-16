@@ -14,10 +14,8 @@
 .cxx
 local.properties
 
-# Claude Code
 .claude/
 .agents/
 skills-lock.json
 
-# ML models — large binaries, download separately via scripts/download_models.sh
 app/src/main/assets/*.onnx
