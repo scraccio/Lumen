@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,8 +18,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.content.Context
+import android.content.Intent
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material3.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
 
 class OnboardingActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,13 +42,13 @@ class OnboardingActivity : ComponentActivity() {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun InterestsScreen() {
-    // Tilstand (State) for å holde styr på valgte emner og kilder
     val context = LocalContext.current
     var selectedTopics by remember { mutableStateOf(setOf<String>()) }
     var selectedSources by remember { mutableStateOf(setOf<String>()) }
+    var isLoading by remember { mutableStateOf(false) }
 
     val topics = listOf("TECHNOLOGY", "SCIENCE", "POLITICS", "WORLD", "BUSINESS", "HEALTH", "CLIMATE", "SPORT")
-    val sources = listOf("BBC News", "Reuters", "Der Spiegel", "Politico", "Al Jazeera")
+    val sources = listOf("The New York Times", "The Guardian", "BBC News", "Reuters", "Der Spiegel", "Politico", "Al Jazeera")
 
     Column(
         modifier = Modifier
@@ -54,7 +57,6 @@ fun InterestsScreen() {
             .padding(horizontal = 24.dp, vertical = 32.dp)
     ) {
 
-        // Tittel
         Text(
             text = "your interests",
             fontSize = 32.sp,
@@ -66,14 +68,12 @@ fun InterestsScreen() {
         HorizontalDivider(color = Color(0xFFF5C842), thickness = 1.dp)
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- SCROLLBART INNHOLD ---
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
         ) {
 
-            // Undertittel
             Text(
                 text = "Pick topics to follow (at least 1)",
                 fontSize = 16.sp,
@@ -82,7 +82,6 @@ fun InterestsScreen() {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // --- TOPICS SEKSJON ---
             Text(
                 text = "TOPICS",
                 fontSize = 22.sp,
@@ -113,7 +112,6 @@ fun InterestsScreen() {
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // --- SOURCES SEKSJON ---
             Text(
                 text = "SOURCES",
                 fontSize = 22.sp,
@@ -136,33 +134,45 @@ fun InterestsScreen() {
             }
         }
 
-        // --- FORTSETT-KNAPP (Låst i bunnen) ---
         Spacer(modifier = Modifier.height(12.dp))
         Button(
             onClick = {
-                savePreferences(
-                    context = context,
-                    topics = selectedTopics,
-                    sources = selectedSources
-                )
-
-                // Naviger videre her senere
+                if (!isLoading) {
+                    isLoading = true
+                    savePreferences(
+                        context = context,
+                        topics = selectedTopics,
+                        sources = selectedSources
+                    )
+                }
             },
+            enabled = !isLoading,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp),
             shape = RoundedCornerShape(24.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFFF5C842),
-                contentColor = Color(0xFF0F1623)
+                contentColor = Color(0xFF0F1623),
+                disabledContainerColor = Color(0xFFF5C842),
+                disabledContentColor = Color(0xFF0F1623)
             ),
-            border = BorderStroke(1.dp, Color(0xFFF5C842))
+            border = BorderStroke(1.dp, Color(0xFFF5C842)),
+            interactionSource = remember { MutableInteractionSource() }
         ) {
-            Text(
-                text = "CONTINUE",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold
-            )
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = Color(0xFF0F1623),
+                    strokeWidth = 2.5.dp
+                )
+            } else {
+                Text(
+                    text = "CONTINUE",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
     }
 }
@@ -171,24 +181,31 @@ fun savePreferences(
     topics: Set<String>,
     sources: Set<String>
 ) {
-    val prefs = context.getSharedPreferences("user_settings", Context.MODE_PRIVATE)
-
-    prefs.edit()
+    context.getSharedPreferences("user_settings", Context.MODE_PRIVATE)
+        .edit()
         .putStringSet("topics", topics)
         .putStringSet("sources", sources)
         .apply()
+
+    context.getSharedPreferences("lumen", Context.MODE_PRIVATE)
+        .edit()
+        .putBoolean("onboarding_done", true)
+        .apply()
+
+    val activity = context as android.app.Activity
+    activity.startActivity(Intent(context, MainActivity::class.java))
+    @Suppress("DEPRECATION")
+    activity.overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
 }
 
 
 
-// Gjenbrukbar komponent for emne-knappene (Pill-shape)
 @Composable
 fun TopicChip(text: String, isSelected: Boolean, onClick: () -> Unit) {
     Surface(
         modifier = Modifier.clickable { onClick() },
         shape = RoundedCornerShape(50),
         border = BorderStroke(1.dp, Color(0xFFF5C842)),
-        // Fyller knappen med lys grå hvis valgt, hvit hvis ikke
         color = if (isSelected) Color(0xFFF5C842) else Color(0xFF0F1623)
     ) {
         Text(
@@ -219,6 +236,7 @@ fun SourceItem(name: String, isChecked: Boolean, onCheckedChange: (Boolean) -> U
             Switch(
                 checked = isChecked,
                 onCheckedChange = onCheckedChange,
+                interactionSource = remember { MutableInteractionSource() },
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = Color(0xFF0F1623),
                     checkedTrackColor = Color(0xFFF5C842),

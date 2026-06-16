@@ -6,7 +6,6 @@ import com.example.lumen.data.dao.StoryDao
 import com.example.lumen.data.dao.UserPrefsDao
 import com.example.lumen.data.model.Article
 import com.example.lumen.data.model.UserPrefs
-import com.example.lumen.ml.BiasAnalyzer
 import com.example.lumen.ml.StoryMatcher
 import com.example.lumen.network.ArticleFetcher
 import com.example.lumen.network.ArticleMapper
@@ -20,7 +19,6 @@ class NewsRepository(
     private val storyDao: StoryDao,
     private val userPrefsDao: UserPrefsDao,
     private val articleFetcher: ArticleFetcher,
-    private val biasAnalyzer: BiasAnalyzer,
     private val storyMatcher: StoryMatcher
 ) {
     // Feed
@@ -72,8 +70,8 @@ class NewsRepository(
         // stories are never deleted automatically
     }
 
-    private val GUARDIAN_API_KEY = "b3c97802-79aa-4bb8-a58d-18de85ef8e8b"
-    private val NYT_API_KEY = "IiLPGO7SSWdxukLhm979mxARzvkmcixjEyV7sWOEifoOI6TA"
+    private val GUARDIAN_API_KEY = com.example.lumen.BuildConfig.GUARDIAN_API_KEY
+    private val NYT_API_KEY = com.example.lumen.BuildConfig.NYT_API_KEY
 
     suspend fun fetchAndSaveArticles() {
         val fromDate = getSevenDaysAgoFormatted()

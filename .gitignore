@@ -13,3 +13,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Claude Code
+.claude/
+.agents/
+skills-lock.json

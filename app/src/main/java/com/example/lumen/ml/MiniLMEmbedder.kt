@@ -13,13 +13,16 @@ class MiniLMEmbedder(context: Context) {
     private val env = OrtEnvironment.getEnvironment()
     private val session: OrtSession
     private val tokenizer = MiniLMTokenizer(context)
+    private val hasTokenTypeIds: Boolean
 
     init {
         val modelBytes = context.assets.open("minilm.onnx").readBytes()
         session = env.createSession(modelBytes, OrtSession.SessionOptions())
-        Log.d("Lumen", "ONNX model loaded. Inputs: ${session.inputNames}")
+        hasTokenTypeIds = session.inputNames.contains("token_type_ids")
+        Log.d("Lumen", "ONNX model loaded. Inputs: ${session.inputNames}, hasTokenTypeIds=$hasTokenTypeIds")
     }
 
+    @Synchronized
     fun embed(text: String): FloatArray? {
         return try {
             val tokens = tokenizer.tokenize(text)
@@ -35,22 +38,25 @@ class MiniLMEmbedder(context: Context) {
                 LongBuffer.wrap(tokens.attentionMask),
                 longArrayOf(1, seqLen)
             )
-            val tokenTypeTensor = OnnxTensor.createTensor(
-                env,
-                LongBuffer.wrap(tokens.tokenTypeIds),
-                longArrayOf(1, seqLen)
+
+            val inputs = mutableMapOf<String, OnnxTensor>(
+                "input_ids" to inputIdsTensor,
+                "attention_mask" to attMaskTensor
             )
 
-            val inputs = mapOf(
-                "input_ids" to inputIdsTensor,
-                "attention_mask" to attMaskTensor,
-                "token_type_ids" to tokenTypeTensor
-            )
+            val tokenTypeTensor = if (hasTokenTypeIds) {
+                val t = OnnxTensor.createTensor(
+                    env,
+                    LongBuffer.wrap(tokens.tokenTypeIds),
+                    longArrayOf(1, seqLen)
+                )
+                inputs["token_type_ids"] = t
+                t
+            } else null
 
             val output = session.run(inputs)
 
-            // last_hidden_state: shape [1, 128, 384]
-            // mean pooling over sequence dimension
+            // last_hidden_state: shape [1, 128, 384], mean pooling over sequence dimension
             val hiddenState = (output[0].value as Array<*>)[0] as Array<*>
             val attMask = tokens.attentionMask
 
@@ -65,14 +71,13 @@ class MiniLMEmbedder(context: Context) {
                 }
             }
 
-            // mean pool
             if (validTokens > 0) {
                 for (j in 0 until 384) embedding[j] /= validTokens
             }
 
             inputIdsTensor.close()
             attMaskTensor.close()
-            tokenTypeTensor.close()
+            tokenTypeTensor?.close()
             output.close()
 
             normalize(embedding)

@@ -34,6 +34,7 @@ class BiasAnalyzer(context: Context) {
         Log.d("Lumen", "BiasAnalyzer loaded. Inputs: ${session.inputNames}")
     }
 
+    @Synchronized
     fun analyze(text: String): BiasResult {
         return try {
             val tokens = tokenizer.tokenize(text)

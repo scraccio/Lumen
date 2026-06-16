@@ -15,14 +15,16 @@
         android:largeHeap="true">
         <activity
             android:name=".OnboardingActivity"
-            android:exported="false">
+            android:exported="false"
+            android:noHistory="true">
             <meta-data
                 android:name="android.app.lib_name"
                 android:value="" />
         </activity>
         <activity
             android:name=".SplashActivity"
-            android:exported="true">
+            android:exported="true"
+            android:noHistory="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -41,6 +43,7 @@
                 android:value="" />
         </activity>
         <activity android:name=".ui.ArticleActivity"/>
+        <activity android:name=".SettingsActivity"/>
     </application>
 
 </manifest>

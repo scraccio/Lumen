@@ -54,6 +54,8 @@ class ArticleActivity : AppCompatActivity() {
 
     private val biasAnalyzer: BiasAnalyzer by lazy { BiasAnalyzer(this) }
 
+    private var currentFetchJob: kotlinx.coroutines.Job? = null
+
     // cache in memoria — solo per questa sessione, non salvato nel db
     private val bodyCache = mutableMapOf<String, String>()
     private val biasCache = mutableMapOf<String, BiasResult>()
@@ -224,7 +226,7 @@ class ArticleActivity : AppCompatActivity() {
         if (cached != null) {
             tvBody.text = cached
             progressBody.visibility = View.GONE
-            biasCache[article.url]?.let { animateBiasIn(it) }
+            biasCache[article.url]?.let { showBiasResult(it) }
             return
         }
 
@@ -237,7 +239,8 @@ class ArticleActivity : AppCompatActivity() {
         tvBiasLoading.visibility = View.VISIBLE
         tvBiasLoading.alpha = 1f
 
-        lifecycleScope.launch {
+        currentFetchJob?.cancel()
+        currentFetchJob = lifecycleScope.launch {
             val body = withContext(Dispatchers.IO) {
                 fetcher.fetchBody(article.url, article.title)
             }

@@ -9,6 +9,7 @@
         <item name="colorOnSecondary">@color/black</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">@color/dark_blue</item>
+        <item name="android:windowBackground">@color/dark_blue</item>
         
         <!-- Customize your theme here. -->
         <item name="android:textViewStyle">@style/PoppinsTextViewStyle</item>

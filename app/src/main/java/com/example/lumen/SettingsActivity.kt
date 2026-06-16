@@ -1,19 +1,21 @@
 package com.example.lumen
 
-import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.activity.compose.setContent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
+import com.example.lumen.R
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,23 +25,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-class SettingsActivity : AppCompatActivity() {
+class SettingsActivity : ComponentActivity() {
+
+    @Suppress("DEPRECATION")
+    override fun finish() {
+        super.finish()
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        installSplashScreen()
-        setContentView(R.layout.activity_splash)
-
-        Handler(Looper.getMainLooper()).postDelayed({
-            val prefs = getSharedPreferences("lumen", MODE_PRIVATE)
-
-            if (prefs.getBoolean("onboarding_done", false)) {
-                startActivity(Intent(this, MainActivity::class.java))
-            } else {
-                startActivity(Intent(this, OnboardingActivity::class.java))
+        setContent {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                SettingsScreen()
             }
-
-            finish()
-        }, 1500)
+        }
     }
 }
 
@@ -51,6 +54,8 @@ fun SettingsScreen() {
     var autoDeduplicate by remember { mutableStateOf(false) }
     var darkMode by remember { mutableStateOf(false) }
 
+    val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -58,11 +63,21 @@ fun SettingsScreen() {
             .padding(horizontal = 24.dp, vertical = 32.dp)
     ) {
 
-        Text(
-            text = "Settings",
-            fontSize = 32.sp,
-            color = Color(0xFFF5C842)
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = { backDispatcher?.onBackPressed() }) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color(0xFFF5C842)
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Settings",
+                fontSize = 32.sp,
+                color = Color(0xFFF5C842)
+            )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -146,6 +161,7 @@ fun SettingsSwitchRow(
             Switch(
                 checked = checked,
                 onCheckedChange = onCheckedChange,
+                interactionSource = remember { MutableInteractionSource() },
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = Color(0xFF0F1623),
                     checkedTrackColor = Color(0xFFF5C842),
@@ -172,9 +188,7 @@ fun SettingsNavigationRow(title: String) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable {
-                    // Navigasjon her
-                }
+                .clickable {  }
                 .padding(vertical = 18.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically

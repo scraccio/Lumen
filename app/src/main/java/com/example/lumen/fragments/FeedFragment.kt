@@ -19,7 +19,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.lumen.R
 import com.example.lumen.data.LumenDatabase
 import com.example.lumen.data.NewsRepository
-import com.example.lumen.ml.BiasAnalyzer
 import com.example.lumen.ml.StoryMatcher
 import com.example.lumen.network.ArticleFetcher
 import com.example.lumen.ui.ArticleActivity
@@ -67,7 +66,6 @@ class FeedFragment : Fragment() {
             db.storyDao(),
             db.userPrefsDao(),
             ArticleFetcher(),
-            BiasAnalyzer(requireContext()),
             StoryMatcher(db.storyDao())
         )
 
@@ -76,16 +74,10 @@ class FeedFragment : Fragment() {
             FeedViewModelFactory(repository, requireContext().applicationContext)
         )[FeedViewModel::class.java]
 
-        // carica le categorie da UserPrefs e costruisce i chip
-        lifecycleScope.launch {
-            val prefs = withContext(Dispatchers.IO) { db.userPrefsDao().getPrefs() }
-            val topics = prefs?.topics
-                ?.split(",")
-                ?.filter { it.isNotBlank() }
-                ?: emptyList()
-
-            buildFilterChips(llFilterChips, topics)
-        }
+        // carica le categorie da SharedPreferences e costruisce i chip
+        val userPrefs = requireContext().getSharedPreferences("user_settings", android.content.Context.MODE_PRIVATE)
+        val topics = userPrefs.getStringSet("topics", emptySet())?.toList() ?: emptyList()
+        buildFilterChips(llFilterChips, topics)
 
         lifecycleScope.launch {
             viewModel.clusters.collect { clusters ->

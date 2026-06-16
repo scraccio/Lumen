@@ -7,8 +7,8 @@ import org.jsoup.Jsoup
 
 class ArticleFetcher {
 
-    private val GUARDIAN_API_KEY = "b3c97802-79aa-4bb8-a58d-18de85ef8e8b"
-    private val NYT_API_KEY = "IiLPGO7SSWdxukLhm979mxARzvkmcixjEyV7sWOEifoOI6TA"
+    private val GUARDIAN_API_KEY = com.example.lumen.BuildConfig.GUARDIAN_API_KEY
+    private val NYT_API_KEY = com.example.lumen.BuildConfig.NYT_API_KEY
 
     suspend fun fetchBody(url: String, title: String? = null): String? {
         return when {
