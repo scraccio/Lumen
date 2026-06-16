@@ -19,3 +19,4 @@ local.properties
 skills-lock.json
 
 app/src/main/assets/*.onnx
+app/src/main/assets/bias_bert.onnx
