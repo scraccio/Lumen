@@ -14,7 +14,8 @@
 
 - [ ] Copy `tokenizer.json` from your `t5_summarization_onnx/` export output into `app/src/main/assets/t5/`
   - This file is needed by `T5Tokenizer` to load the vocabulary
-- [ ] Verify `app/src/main/assets/t5/` contains: `encoder_model.onnx`, `decoder_model.onnx`, `tokenizer.json`
+- [ ] Verify `app/src/main/assets/t5/` contains: `encoder_model_quantized.onnx`, `decoder_model_quantized.onnx`, `tokenizer.json`
+  - The two quantized `.onnx` files are already present; only `tokenizer.json` is missing — copy it in
 
 ---
 
@@ -426,9 +427,9 @@ class T5Summarizer(context: Context) {
     }
 
     init {
-        val encBytes = context.assets.open("t5/encoder_model.onnx").readBytes()
+        val encBytes = context.assets.open("t5/encoder_model_quantized.onnx").readBytes()
         encoderSession = env.createSession(encBytes, OrtSession.SessionOptions())
-        val decBytes = context.assets.open("t5/decoder_model.onnx").readBytes()
+        val decBytes = context.assets.open("t5/decoder_model_quantized.onnx").readBytes()
         decoderSession = env.createSession(decBytes, OrtSession.SessionOptions())
     }
 
