@@ -5,6 +5,9 @@ import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.setContent
 import android.os.Bundle
 import com.example.lumen.R
+import android.content.Context
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,6 +25,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -49,10 +53,11 @@ class SettingsActivity : ComponentActivity() {
 @Composable
 fun SettingsScreen() {
 
+    val context = LocalContext.current
+    val prefs = context.getSharedPreferences("user_settings", Context.MODE_PRIVATE)
+
     var notifications by remember { mutableStateOf(true) }
-    var biasMeter by remember { mutableStateOf(true) }
-    var autoDeduplicate by remember { mutableStateOf(false) }
-    var darkMode by remember { mutableStateOf(false) }
+    var biasMeter by remember { mutableStateOf(prefs.getBoolean("bias_meter_enabled", true)) }
 
     val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
@@ -64,17 +69,21 @@ fun SettingsScreen() {
     ) {
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = { backDispatcher?.onBackPressed() }) {
+            IconButton(
+                onClick = { backDispatcher?.onBackPressed() },
+                modifier = Modifier.offset(x = (-12).dp)
+            ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
                     tint = Color(0xFFF5C842)
                 )
             }
-            Spacer(modifier = Modifier.width(8.dp))
+
             Text(
-                text = "Settings",
+                text = "settings",
                 fontSize = 32.sp,
+                fontWeight = FontWeight.Normal,
                 color = Color(0xFFF5C842)
             )
         }
@@ -105,19 +114,10 @@ fun SettingsScreen() {
         SettingsSwitchRow(
             title = "Show bias meter",
             checked = biasMeter,
-            onCheckedChange = { biasMeter = it }
-        )
-
-        SettingsSwitchRow(
-            title = "Auto-deduplicate",
-            checked = autoDeduplicate,
-            onCheckedChange = { autoDeduplicate = it }
-        )
-
-        SettingsSwitchRow(
-            title = "Dark mode",
-            checked = darkMode,
-            onCheckedChange = { darkMode = it }
+            onCheckedChange = {
+                biasMeter = it
+                prefs.edit().putBoolean("bias_meter_enabled", it).apply()
+            }
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -130,9 +130,16 @@ fun SettingsScreen() {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        SettingsNavigationRow("Edit topics")
-        SettingsNavigationRow("Manage sources")
-        SettingsNavigationRow("Reading history")
+        SettingsNavigationRow("Edit preferences") {
+            val intent = Intent(context, OnboardingActivity::class.java)
+                .putExtra(OnboardingActivity.EXTRA_EDIT_MODE, true)
+            context.startActivity(intent)
+        }
+        SettingsNavigationRow("Reading history") {
+            context.startActivity(
+                Intent(context, com.example.lumen.ui.ReadingHistoryActivity::class.java)
+            )
+        }
     }
 }
 
@@ -181,14 +188,14 @@ fun SettingsSwitchRow(
 }
 
 @Composable
-fun SettingsNavigationRow(title: String) {
+fun SettingsNavigationRow(title: String, onClick: () -> Unit = {}) {
 
     Column {
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable {  }
+                .clickable { onClick() }
                 .padding(vertical = 18.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically

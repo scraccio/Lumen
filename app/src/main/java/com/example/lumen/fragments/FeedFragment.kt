@@ -19,7 +19,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.lumen.R
 import com.example.lumen.data.LumenDatabase
 import com.example.lumen.data.NewsRepository
-import com.example.lumen.ml.StoryMatcher
 import com.example.lumen.network.ArticleFetcher
 import com.example.lumen.ui.ArticleActivity
 import com.example.lumen.ui.ClusterAdapter
@@ -33,6 +32,8 @@ class FeedFragment : Fragment() {
     private lateinit var adapter: ClusterAdapter
     private lateinit var recyclerView: RecyclerView
     private lateinit var progressBar: ProgressBar
+    private lateinit var filterChipsContainer: LinearLayout
+    private var lastPrefsSignature: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,7 +48,7 @@ class FeedFragment : Fragment() {
 
         recyclerView = view.findViewById(R.id.rv_feed)
         progressBar = view.findViewById(R.id.progress_bar)
-        val llFilterChips = view.findViewById<LinearLayout>(R.id.ll_filter_chips)
+        filterChipsContainer = view.findViewById(R.id.ll_filter_chips)
 
         adapter = ClusterAdapter(emptyList()) { cluster ->
             val urls = ArrayList(cluster.articles.map { it.url })
@@ -63,21 +64,17 @@ class FeedFragment : Fragment() {
         val db = LumenDatabase.getInstance(requireContext())
         val repository = NewsRepository(
             db.articleDao(),
-            db.storyDao(),
+            db.followedStoryDao(),
+            db.followedStoryUpdateDao(),
             db.userPrefsDao(),
             ArticleFetcher(),
-            StoryMatcher(db.storyDao())
+            requireContext()
         )
 
         viewModel = ViewModelProvider(
             this,
             FeedViewModelFactory(repository, requireContext().applicationContext)
         )[FeedViewModel::class.java]
-
-        // carica le categorie da SharedPreferences e costruisce i chip
-        val userPrefs = requireContext().getSharedPreferences("user_settings", android.content.Context.MODE_PRIVATE)
-        val topics = userPrefs.getStringSet("topics", emptySet())?.toList() ?: emptyList()
-        buildFilterChips(llFilterChips, topics)
 
         lifecycleScope.launch {
             viewModel.clusters.collect { clusters ->
@@ -91,6 +88,28 @@ class FeedFragment : Fragment() {
             }
         }
 
+        // Build chips + load. onResume re-checks prefs so edits made in Settings
+        // (e.g. a removed topic) refresh the chips without restarting the app.
+        maybeRefreshFromPrefs(force = true)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::filterChipsContainer.isInitialized) maybeRefreshFromPrefs(force = false)
+    }
+
+    // Rebuilds the topic chips and reloads the feed only when the stored topics or
+    // sources changed since the last build, so returning from an article doesn't reset
+    // the current filter while returning from a preferences edit does.
+    private fun maybeRefreshFromPrefs(force: Boolean) {
+        val prefs = requireContext()
+            .getSharedPreferences("user_settings", android.content.Context.MODE_PRIVATE)
+        val topics = prefs.getStringSet("topics", emptySet())?.toList()?.sorted() ?: emptyList()
+        val sources = prefs.getStringSet("sources", emptySet())?.toList()?.sorted() ?: emptyList()
+        val signature = "$topics|$sources"
+        if (!force && signature == lastPrefsSignature) return
+        lastPrefsSignature = signature
+        buildFilterChips(filterChipsContainer, topics)
         viewModel.loadArticles()
     }
 

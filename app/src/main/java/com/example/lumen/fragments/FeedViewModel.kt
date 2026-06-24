@@ -9,6 +9,7 @@ import com.example.lumen.data.NewsRepository
 import com.example.lumen.data.model.ArticleCluster
 import com.example.lumen.ml.ArticleClusterer
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -30,11 +31,17 @@ class FeedViewModel(
     private val _selectedTopic = MutableStateFlow<String?>(null)
     val selectedTopic: StateFlow<String?> = _selectedTopic
 
+    // Only one feed collector at a time — cancel the previous when the topic changes,
+    // otherwise each chip tap would leave another Room-Flow collector running.
+    private var loadJob: Job? = null
+
     fun loadArticles(topic: String? = null) {
         _selectedTopic.value = topic
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _isLoading.value = true
-            if (topic == null) repository.fetchAndSaveArticles()
+            // Re-run the API search scoped to this category (null = general feed).
+            repository.fetchAndSaveArticles(topic)
 
             repository.getAllArticles(topic).collect { articles ->
                 val clusters = withContext(Dispatchers.Default) {
@@ -47,19 +54,7 @@ class FeedViewModel(
         }
     }
 
-    fun filterByTopic(topic: String?) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            repository.getAllArticles(topic).collect { articles ->
-                val clusters = withContext(Dispatchers.Default) {
-                    clusterer.cluster(articles)
-                        .map { group -> ArticleCluster(articles = group) }
-                }
-                _clusters.value = clusters
-                _isLoading.value = false
-            }
-        }
-    }
+    fun filterByTopic(topic: String?) = loadArticles(topic)
 
     override fun onCleared() {
         super.onCleared()

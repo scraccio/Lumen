@@ -16,7 +16,9 @@ local.properties
 
 .claude/
 .agents/
+.superpowers/
 skills-lock.json
 
 app/src/main/assets/*.onnx
 app/src/main/assets/bias_bert.onnx
+app/src/main/assets/t5/

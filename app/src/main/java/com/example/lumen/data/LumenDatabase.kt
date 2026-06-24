@@ -5,22 +5,25 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.lumen.data.dao.ArticleDao
-import com.example.lumen.data.dao.StoryDao
+import com.example.lumen.data.dao.FollowedStoryDao
+import com.example.lumen.data.dao.FollowedStoryUpdateDao
 import com.example.lumen.data.dao.UserPrefsDao
 import com.example.lumen.data.model.Article
+import com.example.lumen.data.model.FollowedStory
+import com.example.lumen.data.model.FollowedStoryUpdate
 import com.example.lumen.data.model.UserPrefs
-import com.example.lumen.data.model.Story
 
 @Database(
-    entities = [Article::class, UserPrefs::class, Story::class],
-    version = 1,
+    entities = [Article::class, UserPrefs::class, FollowedStory::class, FollowedStoryUpdate::class],
+    version = 2,
     exportSchema = false
 )
 abstract class LumenDatabase : RoomDatabase() {
 
     abstract fun articleDao(): ArticleDao
     abstract fun userPrefsDao(): UserPrefsDao
-    abstract fun storyDao(): StoryDao
+    abstract fun followedStoryDao(): FollowedStoryDao
+    abstract fun followedStoryUpdateDao(): FollowedStoryUpdateDao
 
     companion object {
         @Volatile

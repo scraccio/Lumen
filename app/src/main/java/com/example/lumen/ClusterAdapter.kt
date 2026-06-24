@@ -95,6 +95,7 @@ class ClusterAdapter(
     private fun sourceColor(source: String): Int = when (source) {
         "The Guardian" -> Color.parseColor("#005689")
         "New York Times" -> Color.parseColor("#000000")
+        "Der Spiegel" -> Color.parseColor("#E64415")
         else -> Color.parseColor("#666666")
     }
 

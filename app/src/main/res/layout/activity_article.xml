@@ -1,300 +1,329 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="@color/dark_blue">
 
-    <!-- Toolbar -->
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/article_toolbar"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/dark_blue"
-        android:elevation="4dp">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@color/dark_blue">
 
-        <ImageButton
-            android:id="@+id/btn_back"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_arrow_back"
-            android:background="?attr/selectableItemBackgroundBorderless" />
+        <!-- Toolbar -->
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/article_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/dark_blue"
+            android:elevation="4dp">
 
-    </androidx.appcompat.widget.Toolbar>
+            <ImageButton
+                android:id="@+id/btn_back"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_arrow_back"
+                android:background="?attr/selectableItemBackgroundBorderless" />
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/yellow"/>
+        </androidx.appcompat.widget.Toolbar>
 
-    <!-- Source switcher row -->
-    <HorizontalScrollView
-        android:id="@+id/hsv_sources"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:scrollbars="none"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        android:visibility="gone">
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/yellow"/>
 
-        <LinearLayout
-            android:id="@+id/ll_source_tabs"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"/>
-
-    </HorizontalScrollView>
-
-    <!-- Article content -->
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:padding="16dp">
-
-        <LinearLayout
+        <!-- Source switcher row -->
+        <HorizontalScrollView
+            android:id="@+id/hsv_sources"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:scrollbars="none"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:visibility="gone">
 
-            <ImageView
-                android:id="@+id/iv_article_image"
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:scaleType="centerCrop"
-                android:visibility="gone"/>
-
-            <TextView
-                android:id="@+id/tv_article_source"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:paddingTop="4dp"
-                android:paddingBottom="4dp"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:textSize="11sp"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold"/>
-
-            <TextView
-                android:id="@+id/tv_article_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF"
-                android:lineSpacingMultiplier="1.2"/>
-
-            <TextView
-                android:id="@+id/tv_article_date"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:textSize="12sp"
-                android:textColor="#AAAAAA"/>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="16dp"
-                android:background="@color/yellow"/>
-
-            <!-- "Calculating bias..." — appare subito, fuori da ll_bias -->
-            <TextView
-                android:id="@+id/tv_bias_loading"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:text="Calculating bias..."
-                android:textColor="#AAAAAA"
-                android:textSize="12sp"
-                android:visibility="gone"/>
-
-            <!-- Bias result card — parte invisibile -->
             <LinearLayout
-                android:id="@+id/ll_bias"
+                android:id="@+id/ll_source_tabs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"/>
+
+        </HorizontalScrollView>
+
+        <!-- Article content -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:padding="16dp">
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginBottom="16dp"
-                android:padding="12dp"
-                android:alpha="0"
-                android:visibility="gone">
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/iv_article_image"
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    android:scaleType="centerCrop"
+                    android:visibility="gone"/>
 
                 <TextView
+                    android:id="@+id/tv_article_source"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="POLITICAL BIAS"
-                    android:textColor="#AAAAAA"
-                    android:textSize="10sp"
-                    android:letterSpacing="0.12"
-                    android:layout_marginBottom="10dp"/>
-
-                <!-- Left bar -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="6dp">
-
-                    <TextView
-                        android:layout_width="44dp"
-                        android:layout_height="wrap_content"
-                        android:text="Left"
-                        android:textColor="#FF7B72"
-                        android:textSize="11sp"/>
-
-                    <FrameLayout
-                        android:layout_width="0dp"
-                        android:layout_height="8dp"
-                        android:layout_weight="1"
-                        android:background="#2A2A2A">
-
-                        <View
-                            android:id="@+id/v_bias_left"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_gravity="start"
-                            android:background="#FF7B72"/>
-
-                    </FrameLayout>
-
-                    <TextView
-                        android:id="@+id/tv_bias_left_pct"
-                        android:layout_width="36dp"
-                        android:layout_height="wrap_content"
-                        android:textColor="#FF7B72"
-                        android:textSize="11sp"
-                        android:gravity="end"/>
-
-                </LinearLayout>
-
-                <!-- Center bar -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="6dp">
-
-                    <TextView
-                        android:layout_width="44dp"
-                        android:layout_height="wrap_content"
-                        android:text="Center"
-                        android:textColor="#7BD88F"
-                        android:textSize="11sp"/>
-
-                    <FrameLayout
-                        android:layout_width="0dp"
-                        android:layout_height="8dp"
-                        android:layout_weight="1"
-                        android:background="#2A2A2A">
-
-                        <View
-                            android:id="@+id/v_bias_center"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_gravity="start"
-                            android:background="#7BD88F"/>
-
-                    </FrameLayout>
-
-                    <TextView
-                        android:id="@+id/tv_bias_center_pct"
-                        android:layout_width="36dp"
-                        android:layout_height="wrap_content"
-                        android:textColor="#7BD88F"
-                        android:textSize="11sp"
-                        android:gravity="end"/>
-
-                </LinearLayout>
-
-                <!-- Right bar -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:layout_width="44dp"
-                        android:layout_height="wrap_content"
-                        android:text="Right"
-                        android:textColor="#7CC7FF"
-                        android:textSize="11sp"/>
-
-                    <FrameLayout
-                        android:layout_width="0dp"
-                        android:layout_height="8dp"
-                        android:layout_weight="1"
-                        android:background="#2A2A2A">
-
-                        <View
-                            android:id="@+id/v_bias_right"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_gravity="start"
-                            android:background="#7CC7FF"/>
-
-                    </FrameLayout>
-
-                    <TextView
-                        android:id="@+id/tv_bias_right_pct"
-                        android:layout_width="36dp"
-                        android:layout_height="wrap_content"
-                        android:textColor="#7CC7FF"
-                        android:textSize="11sp"
-                        android:gravity="end"/>
-
-                </LinearLayout>
+                    android:layout_marginTop="12dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:textSize="11sp"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"/>
 
                 <TextView
-                    android:id="@+id/tv_bias_label"
-                    android:layout_width="wrap_content"
+                    android:id="@+id/tv_article_title"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:textSize="12sp"
+                    android:layout_marginTop="12dp"
+                    android:textSize="20sp"
                     android:textStyle="bold"
-                    android:textColor="#F5C842"/>
+                    android:textColor="#FFFFFF"
+                    android:lineSpacingMultiplier="1.2"/>
+
+                <TextView
+                    android:id="@+id/tv_article_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:textSize="12sp"
+                    android:textColor="#AAAAAA"/>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="16dp"
+                    android:background="@color/yellow"/>
+
+                <!-- "Calculating bias..." — appare subito, fuori da ll_bias -->
+                <TextView
+                    android:id="@+id/tv_bias_loading"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:text="Calculating bias..."
+                    android:textColor="#AAAAAA"
+                    android:textSize="12sp"
+                    android:visibility="gone"/>
+
+                <!-- Bias result card — parte invisibile -->
+                <LinearLayout
+                    android:id="@+id/ll_bias"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="16dp"
+                    android:padding="12dp"
+                    android:alpha="0"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="POLITICAL BIAS"
+                        android:textColor="#AAAAAA"
+                        android:textSize="10sp"
+                        android:letterSpacing="0.12"
+                        android:layout_marginBottom="10dp"/>
+
+                    <!-- Left bar -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="6dp">
+
+                        <TextView
+                            android:layout_width="44dp"
+                            android:layout_height="wrap_content"
+                            android:text="Left"
+                            android:textColor="#FF7B72"
+                            android:textSize="11sp"/>
+
+                        <FrameLayout
+                            android:layout_width="0dp"
+                            android:layout_height="8dp"
+                            android:layout_weight="1"
+                            android:background="#2A2A2A">
+
+                            <View
+                                android:id="@+id/v_bias_left"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_gravity="start"
+                                android:background="#FF7B72"/>
+
+                        </FrameLayout>
+
+                        <TextView
+                            android:id="@+id/tv_bias_left_pct"
+                            android:layout_width="36dp"
+                            android:layout_height="wrap_content"
+                            android:textColor="#FF7B72"
+                            android:textSize="11sp"
+                            android:gravity="end"/>
+
+                    </LinearLayout>
+
+                    <!-- Center bar -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="6dp">
+
+                        <TextView
+                            android:layout_width="44dp"
+                            android:layout_height="wrap_content"
+                            android:text="Center"
+                            android:textColor="#7BD88F"
+                            android:textSize="11sp"/>
+
+                        <FrameLayout
+                            android:layout_width="0dp"
+                            android:layout_height="8dp"
+                            android:layout_weight="1"
+                            android:background="#2A2A2A">
+
+                            <View
+                                android:id="@+id/v_bias_center"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_gravity="start"
+                                android:background="#7BD88F"/>
+
+                        </FrameLayout>
+
+                        <TextView
+                            android:id="@+id/tv_bias_center_pct"
+                            android:layout_width="36dp"
+                            android:layout_height="wrap_content"
+                            android:textColor="#7BD88F"
+                            android:textSize="11sp"
+                            android:gravity="end"/>
+
+                    </LinearLayout>
+
+                    <!-- Right bar -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:layout_width="44dp"
+                            android:layout_height="wrap_content"
+                            android:text="Right"
+                            android:textColor="#7CC7FF"
+                            android:textSize="11sp"/>
+
+                        <FrameLayout
+                            android:layout_width="0dp"
+                            android:layout_height="8dp"
+                            android:layout_weight="1"
+                            android:background="#2A2A2A">
+
+                            <View
+                                android:id="@+id/v_bias_right"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_gravity="start"
+                                android:background="#7CC7FF"/>
+
+                        </FrameLayout>
+
+                        <TextView
+                            android:id="@+id/tv_bias_right_pct"
+                            android:layout_width="36dp"
+                            android:layout_height="wrap_content"
+                            android:textColor="#7CC7FF"
+                            android:textSize="11sp"
+                            android:gravity="end"/>
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tv_bias_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="#F5C842"/>
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tv_article_body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:textColor="#DDDDDD"
+                    android:lineSpacingMultiplier="1.6"/>
+
+                <ProgressBar
+                    android:id="@+id/progress_body"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="32dp"
+                    android:visibility="gone"/>
+
+                <Button
+                    android:id="@+id/btn_open_browser"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginBottom="24dp"
+                    android:text="Read full article"
+                    android:textColor="@color/dark_blue"
+                    android:backgroundTint="@color/yellow"/>
 
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/tv_article_body"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textSize="16sp"
-                android:textColor="#DDDDDD"
-                android:lineSpacingMultiplier="1.6"/>
+        </ScrollView>
 
-            <ProgressBar
-                android:id="@+id/progress_body"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="32dp"
-                android:visibility="gone"/>
+    </LinearLayout>
 
-            <Button
-                android:id="@+id/btn_open_browser"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="24dp"
-                android:text="Read full article"
-                android:textColor="@color/dark_blue"
-                android:backgroundTint="@color/yellow"/>
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_follow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:contentDescription="Follow story"
+        app:srcCompat="@drawable/ic_bookmark_border"
+        app:backgroundTint="@color/yellow"
+        app:tint="@color/dark_blue"/>
 
-        </LinearLayout>
+    <!-- Spinner shown in place of the FAB while a story is being summarized -->
+    <ProgressBar
+        android:id="@+id/progress_follow"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:padding="12dp"
+        android:indeterminateTint="@color/yellow"
+        android:visibility="gone"/>
 
-    </ScrollView>
-
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

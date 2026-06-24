@@ -62,7 +62,7 @@ class BiasAnalyzer(context: Context) {
                 "token_type_ids" to tokenTypeTensor
             )
 
-            val output = session.run(inputs)
+            val output = synchronized(OnnxGate.lock) { session.run(inputs) }
 
             // logits shape [1, 3]
             val logits = ((output[0].value as Array<*>)[0]) as FloatArray

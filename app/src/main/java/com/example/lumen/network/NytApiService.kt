@@ -11,7 +11,7 @@ interface NytApiService {
         @Query("begin_date") beginDate: String,
         @Query("sort") sort: String = "newest",
         @Query("fl") fields: String = "headline,web_url,abstract,pub_date,section_name,multimedia",
-        @Query("q") query: String = "Gaza ceasefire",
+        @Query("q") query: String = "",
     ): NytSearchResponse
 
     @GET("articlesearch.json")

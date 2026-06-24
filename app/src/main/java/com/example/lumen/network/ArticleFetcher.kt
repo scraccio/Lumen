@@ -22,61 +22,34 @@ class ArticleFetcher {
         return fetchViaJsoup(url)
     }
 
-    private suspend fun fetchNytBody(url: String, title: String? = null): String? {
+    private suspend fun fetchNytBody(url: String): String? {
         return withContext(Dispatchers.IO) {
-            try {
+            // Primary: NYT search API by exact URL. getArticleByUrl requests
+            // lead_paragraph/abstract/snippet, so when the doc is found we get real text.
+            val apiBody = try {
                 Log.d("Lumen", "Fetching NYT body for: $url")
-
-                // extract article slug from URL as search query
-                // e.g. https://www.nytimes.com/2026/06/09/opinion/ezra-klein-podcast-matt-duss.html
-                // → "ezra klein podcast matt duss"
-                val slug = url
-                    .substringAfterLast("/")
-                    .removeSuffix(".html")
-                    .replace("-", " ")
-
-                Log.d("Lumen", "NYT search slug: $slug")
-
                 val response = RetrofitClient.nytApi.getArticleByUrl(
                     apiKey = NYT_API_KEY,
                     filterQuery = "web_url:(\"$url\")"
                 )
-
-                var article = response.response.docs?.firstOrNull()
-
-                // if not found by URL, try searching by slug
-                if (article == null) {
-                    Log.d("Lumen", "NYT URL filter failed, trying slug search...")
-                    val slugResponse = RetrofitClient.nytApi.getRecentArticles(
-                        apiKey = NYT_API_KEY,
-                        beginDate = "20200101",
-                        query = slug
-                    )
-                    article = slugResponse.response.docs?.firstOrNull {
-                        it.web_url == url
-                    } ?: slugResponse.response.docs?.firstOrNull()
-                }
-
-                if (article == null) {
-                    Log.d("Lumen", "NYT article not found")
-                    return@withContext null
-                }
-
-                Log.d("Lumen", "NYT article found: ${article.headline.main}")
-                Log.d("Lumen", "lead_paragraph: ${article.lead_paragraph}")
-                Log.d("Lumen", "abstract: ${article.abstract}")
-
-                val parts = mutableListOf<String>()
-                article.lead_paragraph?.takeIf { it.isNotBlank() }?.let { parts.add(it) }
-                article.abstract?.takeIf { it.isNotBlank() && it != article.lead_paragraph }?.let { parts.add(it) }
-                article.snippet?.takeIf { it.isNotBlank() && it != article.abstract }?.let { parts.add(it) }
-
-                val body = parts.joinToString("\n\n")
-                if (body.isNotBlank()) body else null
-
+                val article = response.response.docs?.firstOrNull()
+                if (article != null) {
+                    val parts = mutableListOf<String>()
+                    article.lead_paragraph?.takeIf { it.isNotBlank() }?.let { parts.add(it) }
+                    article.abstract?.takeIf { it.isNotBlank() && it != article.lead_paragraph }?.let { parts.add(it) }
+                    article.snippet?.takeIf { it.isNotBlank() && it != article.abstract }?.let { parts.add(it) }
+                    parts.joinToString("\n\n").takeIf { it.isNotBlank() }
+                } else null
             } catch (e: Exception) {
-                Log.e("Lumen", "NYT fetch failed: ${e.message}")
+                Log.e("Lumen", "NYT API fetch failed: ${e.message}")
                 null
+            }
+
+            // The search API frequently returns no doc for the exact URL (or only an
+            // empty abstract). Fall back to scraping the page for its lede paragraphs.
+            apiBody ?: run {
+                Log.d("Lumen", "NYT API returned no body, falling back to Jsoup scrape")
+                fetchViaJsoup(url)
             }
         }
     }

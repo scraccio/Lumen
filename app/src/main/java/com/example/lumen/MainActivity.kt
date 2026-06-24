@@ -12,7 +12,6 @@ import com.example.lumen.data.LumenDatabase
 import com.example.lumen.data.NewsRepository
 import com.example.lumen.fragments.DashboardFragment
 import com.example.lumen.fragments.StoryFragment
-import com.example.lumen.ml.StoryMatcher
 import com.example.lumen.network.ArticleFetcher
 import com.example.lumen.ui.fragments.FeedFragment
 
@@ -36,10 +35,11 @@ class MainActivity : AppCompatActivity() {
         database = LumenDatabase.getInstance(this)
         repository = NewsRepository(
             database.articleDao(),
-            database.storyDao(),
+            database.followedStoryDao(),
+            database.followedStoryUpdateDao(),
             database.userPrefsDao(),
             ArticleFetcher(),
-            StoryMatcher(database.storyDao())
+            this
         )
 
         btnFeed = findViewById(R.id.feed)

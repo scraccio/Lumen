@@ -54,7 +54,7 @@ class MiniLMEmbedder(context: Context) {
                 t
             } else null
 
-            val output = session.run(inputs)
+            val output = synchronized(OnnxGate.lock) { session.run(inputs) }
 
             // last_hidden_state: shape [1, 128, 384], mean pooling over sequence dimension
             val hiddenState = (output[0].value as Array<*>)[0] as Array<*>
@@ -98,7 +98,10 @@ class MiniLMEmbedder(context: Context) {
     }
 
     fun close() {
+        // NOTE: do NOT close `env` here. OrtEnvironment.getEnvironment() is a
+        // process-wide singleton shared with BiasAnalyzer, ArticleClusterer and
+        // T5Summarizer. Closing it breaks ONNX for the whole app (native crash in
+        // OrtSession.run elsewhere). It is released automatically on process exit.
         session.close()
-        env.close()
     }
 }

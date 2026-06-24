@@ -28,23 +28,35 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 class OnboardingActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val editMode = intent.getBooleanExtra(EXTRA_EDIT_MODE, false)
         setContent {
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.background
             ) {
-                InterestsScreen()
+                InterestsScreen(editMode = editMode)
             }
         }
+    }
+
+    companion object {
+        const val EXTRA_EDIT_MODE = "extra_edit_mode"
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun InterestsScreen() {
+fun InterestsScreen(editMode: Boolean = false) {
     val context = LocalContext.current
-    var selectedTopics by remember { mutableStateOf(setOf<String>()) }
-    var selectedSources by remember { mutableStateOf(setOf<String>()) }
+    val savedPrefs = remember {
+        context.getSharedPreferences("user_settings", Context.MODE_PRIVATE)
+    }
+    var selectedTopics by remember {
+        mutableStateOf(savedPrefs.getStringSet("topics", emptySet())?.toSet() ?: emptySet())
+    }
+    var selectedSources by remember {
+        mutableStateOf(savedPrefs.getStringSet("sources", emptySet())?.toSet() ?: emptySet())
+    }
     var isLoading by remember { mutableStateOf(false) }
 
     val topics = listOf("TECHNOLOGY", "SCIENCE", "POLITICS", "WORLD", "BUSINESS", "HEALTH", "CLIMATE", "SPORT")
@@ -58,7 +70,7 @@ fun InterestsScreen() {
     ) {
 
         Text(
-            text = "your interests",
+            text = if (editMode) "edit interests" else "your interests",
             fontSize = 32.sp,
             fontWeight = FontWeight.Normal,
             color = Color(0xFFF5C842)
@@ -142,7 +154,8 @@ fun InterestsScreen() {
                     savePreferences(
                         context = context,
                         topics = selectedTopics,
-                        sources = selectedSources
+                        sources = selectedSources,
+                        editMode = editMode
                     )
                 }
             },
@@ -179,7 +192,8 @@ fun InterestsScreen() {
 fun savePreferences(
     context: Context,
     topics: Set<String>,
-    sources: Set<String>
+    sources: Set<String>,
+    editMode: Boolean = false
 ) {
     context.getSharedPreferences("user_settings", Context.MODE_PRIVATE)
         .edit()
@@ -187,12 +201,20 @@ fun savePreferences(
         .putStringSet("sources", sources)
         .apply()
 
+    val activity = context as android.app.Activity
+
+    if (editMode) {
+        // Editing existing prefs from Settings — overwrite and return.
+        // The feed re-reads SharedPreferences the next time it loads.
+        activity.finish()
+        return
+    }
+
     context.getSharedPreferences("lumen", Context.MODE_PRIVATE)
         .edit()
         .putBoolean("onboarding_done", true)
         .apply()
 
-    val activity = context as android.app.Activity
     activity.startActivity(Intent(context, MainActivity::class.java))
     @Suppress("DEPRECATION")
     activity.overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)

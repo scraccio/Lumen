@@ -13,9 +13,13 @@ import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.example.lumen.R
 import com.example.lumen.data.LumenDatabase
+import com.example.lumen.data.NewsRepository
 import com.example.lumen.data.model.Article
 import com.example.lumen.ml.BiasResult
+import com.example.lumen.ml.MiniLMEmbedder
+import com.example.lumen.ml.T5Summarizer
 import com.example.lumen.network.ArticleFetcher
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -25,6 +29,7 @@ import java.util.Locale
 import com.example.lumen.ml.BiasAnalyzer
 import android.view.ViewTreeObserver
 import androidx.core.view.doOnLayout
+import kotlin.math.sqrt
 
 class ArticleActivity : AppCompatActivity() {
 
@@ -52,13 +57,24 @@ class ArticleActivity : AppCompatActivity() {
     private lateinit var tvBiasLabel: TextView
     private lateinit var tvBiasLoading: TextView
 
-    private val biasAnalyzer: BiasAnalyzer by lazy { BiasAnalyzer(this) }
+    private val biasAnalyzerDelegate = lazy { BiasAnalyzer(this) }
+    private val biasAnalyzer: BiasAnalyzer by biasAnalyzerDelegate
 
     private var currentFetchJob: kotlinx.coroutines.Job? = null
 
     // cache in memoria — solo per questa sessione, non salvato nel db
     private val bodyCache = mutableMapOf<String, String>()
     private val biasCache = mutableMapOf<String, BiasResult>()
+
+    // Follow FAB and related fields
+    private lateinit var fabFollow: FloatingActionButton
+    private lateinit var progressFollow: ProgressBar
+    private val embedderDelegate = lazy { MiniLMEmbedder(this) }
+    private val embedder: MiniLMEmbedder by embedderDelegate
+    private val t5Delegate = lazy { T5Summarizer(this) }
+    private val t5Summarizer: T5Summarizer by t5Delegate
+    private var followedStoryId: String? = null
+    private lateinit var repository: NewsRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -86,6 +102,20 @@ class ArticleActivity : AppCompatActivity() {
 
         findViewById<ImageButton>(R.id.btn_back).setOnClickListener { finish() }
 
+        val db = LumenDatabase.getInstance(this)
+        repository = NewsRepository(
+            db.articleDao(),
+            db.followedStoryDao(),
+            db.followedStoryUpdateDao(),
+            db.userPrefsDao(),
+            ArticleFetcher(),
+            this
+        )
+
+        fabFollow = findViewById(R.id.fab_follow)
+        progressFollow = findViewById(R.id.progress_follow)
+        fabFollow.setOnClickListener { handleFollowTap() }
+
         // receive article URLs from intent
         val urls = intent.getStringArrayListExtra(EXTRA_URLS) ?: return
         val startIndex = intent.getIntExtra(EXTRA_START_INDEX, 0)
@@ -103,7 +133,110 @@ class ArticleActivity : AppCompatActivity() {
             currentIndex = startIndex
             setupSourceTabs()
             displayArticle(currentIndex)
+            checkFollowState()
         }
+    }
+
+    private fun checkFollowState() {
+        lifecycleScope.launch {
+            val urls = articles.map { it.url }
+            followedStoryId = withContext(Dispatchers.IO) {
+                repository.isClusterFollowed(urls)
+            }
+            updateFabAppearance()
+        }
+    }
+
+    private fun updateFabAppearance() {
+        if (followedStoryId != null) {
+            fabFollow.setImageResource(R.drawable.ic_bookmark)
+        } else {
+            fabFollow.setImageResource(R.drawable.ic_bookmark_border)
+        }
+    }
+
+    private fun handleFollowTap() {
+        animateFabPress()
+        if (followedStoryId != null) {
+            lifecycleScope.launch {
+                withContext(Dispatchers.IO) { repository.unfollowStory(followedStoryId!!) }
+                followedStoryId = null
+                updateFabAppearance()
+            }
+            return
+        }
+
+        fabFollow.visibility = View.INVISIBLE
+        progressFollow.visibility = View.VISIBLE
+        lifecycleScope.launch {
+            val (summary, title) = withContext(Dispatchers.Default) {
+                val bodies = mutableMapOf<String, String>()
+                for (article in articles) {
+                    val body = fetcher.fetchBody(article.url, article.title)
+                    if (!body.isNullOrBlank()) bodies[article.url] = body
+                }
+                t5Summarizer.summarizeAndTitle(articles, bodies)
+            }
+
+            val embeddings = withContext(Dispatchers.Default) {
+                articles.mapNotNull { embedder.embed(it.title) }
+            }
+            val centroid = computeCentroid(embeddings)
+            // Keywords drive future article matching, so derive them from the real
+            // article title, not the generated headline.
+            val keywords = extractKeywords(articles.first().title)
+
+            withContext(Dispatchers.IO) {
+                followedStoryId = repository.followCluster(
+                    title = title.ifBlank { articles.first().title },
+                    keywords = keywords,
+                    centroidEmbedding = centroid,
+                    summary = summary,
+                    articleUrls = articles.map { it.url }
+                )
+            }
+            progressFollow.visibility = View.GONE
+            fabFollow.visibility = View.VISIBLE
+            updateFabAppearance()
+        }
+    }
+
+    private fun animateFabPress() {
+        fabFollow.animate()
+            .scaleX(0.8f).scaleY(0.8f)
+            .setDuration(100)
+            .withEndAction {
+                fabFollow.animate()
+                    .scaleX(1f).scaleY(1f)
+                    .setDuration(180)
+                    .setInterpolator(android.view.animation.OvershootInterpolator())
+                    .start()
+            }
+            .start()
+    }
+
+    private fun computeCentroid(embeddings: List<FloatArray>): FloatArray {
+        if (embeddings.isEmpty()) return FloatArray(384)
+        val sum = DoubleArray(384)
+        for (emb in embeddings) {
+            for (i in 0 until 384) {
+                sum[i] = sum[i] + emb[i]
+            }
+        }
+        val count = embeddings.size.toDouble()
+        val centroid = FloatArray(384) { (sum[it] / count).toFloat() }
+        val mag = sqrt(centroid.sumOf { (it * it).toDouble() }).toFloat()
+        return if (mag == 0f) centroid else FloatArray(384) { centroid[it] / mag }
+    }
+
+    private fun extractKeywords(title: String): String {
+        val stopWords = setOf("the","a","an","is","in","on","at","to","of","and","or","but","for","with","this","that","its","it")
+        return title.lowercase()
+            .replace(Regex("[^a-z0-9 ]"), "")
+            .split(" ")
+            .filter { it.length > 3 && it !in stopWords }
+            .take(4)
+            .joinToString(",")
     }
 
     private fun setupSourceTabs() {
@@ -182,6 +315,8 @@ class ArticleActivity : AppCompatActivity() {
     private fun displayArticle(index: Int) {
         val article = articles[index]
 
+        lifecycleScope.launch { repository.markAsRead(article.url) }
+
         tvTitle.text = article.title
         tvSource.text = article.source
         tvDate.text = formatDate(article.publishedAt)
@@ -222,11 +357,14 @@ class ArticleActivity : AppCompatActivity() {
     }
 
     private fun fetchBody(article: Article) {
+        val biasEnabled = getSharedPreferences("user_settings", MODE_PRIVATE)
+            .getBoolean("bias_meter_enabled", true)
+
         val cached = bodyCache[article.url]
         if (cached != null) {
             tvBody.text = cached
             progressBody.visibility = View.GONE
-            biasCache[article.url]?.let { showBiasResult(it) }
+            if (biasEnabled) biasCache[article.url]?.let { showBiasResult(it) }
             return
         }
 
@@ -235,9 +373,13 @@ class ArticleActivity : AppCompatActivity() {
         llBias.visibility = View.GONE
         llBias.alpha = 0f
 
-        // mostra "Calculating bias..."
-        tvBiasLoading.visibility = View.VISIBLE
-        tvBiasLoading.alpha = 1f
+        // mostra "Calculating bias..." solo se il bias meter è attivo
+        if (biasEnabled) {
+            tvBiasLoading.visibility = View.VISIBLE
+            tvBiasLoading.alpha = 1f
+        } else {
+            tvBiasLoading.visibility = View.GONE
+        }
 
         currentFetchJob?.cancel()
         currentFetchJob = lifecycleScope.launch {
@@ -251,17 +393,27 @@ class ArticleActivity : AppCompatActivity() {
                 bodyCache[article.url] = body
                 tvBody.text = body
 
-                val result = withContext(Dispatchers.Default) {
-                    biasAnalyzer.analyze(body)
+                if (biasEnabled) {
+                    val result = withContext(Dispatchers.Default) {
+                        biasAnalyzer.analyze(body)
+                    }
+                    biasCache[article.url] = result
+                    withContext(Dispatchers.IO) {
+                        repository.saveBias(
+                            article.url, result.label, result.score,
+                            result.leftScore, result.centerScore, result.rightScore
+                        )
+                    }
+                    animateBiasIn(result)
                 }
-                biasCache[article.url] = result
-                animateBiasIn(result)
 
             } else {
                 tvBody.text = "Could not load article content. Tap 'Read full article' to open in browser."
-                tvBiasLoading.animate().alpha(0f).setDuration(300).withEndAction {
-                    tvBiasLoading.visibility = View.GONE
-                }.start()
+                if (biasEnabled) {
+                    tvBiasLoading.animate().alpha(0f).setDuration(300).withEndAction {
+                        tvBiasLoading.visibility = View.GONE
+                    }.start()
+                }
             }
         }
     }
@@ -324,6 +476,7 @@ class ArticleActivity : AppCompatActivity() {
     private fun sourceColor(source: String): Int = when (source) {
         "The Guardian" -> Color.parseColor("#005689")
         "New York Times" -> Color.parseColor("#000000")
+        "Der Spiegel" -> Color.parseColor("#E64415")
         else -> Color.parseColor("#666666")
     }
 
@@ -339,6 +492,8 @@ class ArticleActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        biasAnalyzer.close()
+        if (biasAnalyzerDelegate.isInitialized()) biasAnalyzer.close()
+        if (embedderDelegate.isInitialized()) embedder.close()
+        if (t5Delegate.isInitialized()) t5Summarizer.close()
     }
 }

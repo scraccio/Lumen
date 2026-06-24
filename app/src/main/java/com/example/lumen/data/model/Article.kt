@@ -22,8 +22,8 @@ data class Article(
     // Deduplication
     val clusterId: String? = null,
 
-    // Story tracking
-    val storyId: String? = null,
+    // Followed story reference
+    val followedStoryId: String? = null,
 
     // Reading state
     val isRead: Boolean = false,
