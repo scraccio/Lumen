@@ -1,18 +1,24 @@
 package com.example.lumen
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.graphics.Typeface
+import android.os.Build
 import android.view.animation.DecelerateInterpolator
 import android.widget.Button
 import android.widget.ImageButton
 import android.view.View
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
 import com.example.lumen.data.LumenDatabase
 import com.example.lumen.data.NewsRepository
 import com.example.lumen.fragments.DashboardFragment
 import com.example.lumen.fragments.StoryFragment
 import com.example.lumen.network.ArticleFetcher
+import com.example.lumen.notifications.NotificationScheduler
 import com.example.lumen.ui.fragments.FeedFragment
 
 class MainActivity : AppCompatActivity() {
@@ -24,6 +30,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnStories: Button
     private lateinit var btnStats: Button
     private lateinit var navIndicator: View
+
+    private val requestNotifPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) NotificationScheduler.enable(this)
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,6 +52,8 @@ class MainActivity : AppCompatActivity() {
             ArticleFetcher(),
             this
         )
+
+        maybeScheduleReminders()
 
         btnFeed = findViewById(R.id.feed)
         btnStories = findViewById(R.id.stories)
@@ -85,6 +98,21 @@ class MainActivity : AppCompatActivity() {
                 .replace(R.id.fragment_container, DashboardFragment())
                 .commit()
             setActiveTab(2)
+        }
+    }
+
+    /** Honour the (default-on) Notifications pref: schedule reminders, requesting permission once on API 33+. */
+    private fun maybeScheduleReminders() {
+        val prefs = getSharedPreferences(NotificationScheduler.PREFS, MODE_PRIVATE)
+        if (!prefs.getBoolean(NotificationScheduler.KEY_ENABLED, true)) return
+        NotificationScheduler.ensureChannel(this)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            requestNotifPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            NotificationScheduler.enable(this)
         }
     }
 

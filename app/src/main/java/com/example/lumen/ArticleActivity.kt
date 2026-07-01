@@ -172,7 +172,7 @@ class ArticleActivity : AppCompatActivity() {
             val (summary, title) = withContext(Dispatchers.Default) {
                 val bodies = mutableMapOf<String, String>()
                 for (article in articles) {
-                    val body = fetcher.fetchBody(article.url, article.title)
+                    val body = fetcher.fetchBody(article)
                     if (!body.isNullOrBlank()) bodies[article.url] = body
                 }
                 t5Summarizer.summarizeAndTitle(articles, bodies)
@@ -384,7 +384,7 @@ class ArticleActivity : AppCompatActivity() {
         currentFetchJob?.cancel()
         currentFetchJob = lifecycleScope.launch {
             val body = withContext(Dispatchers.IO) {
-                fetcher.fetchBody(article.url, article.title)
+                fetcher.fetchBody(article)
             }
 
             progressBody.visibility = View.GONE

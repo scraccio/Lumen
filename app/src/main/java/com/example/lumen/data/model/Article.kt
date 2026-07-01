@@ -12,6 +12,10 @@ data class Article(
     val publishedAt: Long,
     val imageUrl: String? = null,
 
+    // Body text captured at fetch time when the source delivers it (e.g. the NYT
+    // abstract). Null for sources whose body is scraped lazily on open (Guardian, Spiegel).
+    val body: String? = null,
+
     // Bias
     val biasScore: Float? = null,
     val biasLabel: String? = null,

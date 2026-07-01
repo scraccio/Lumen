@@ -25,7 +25,7 @@ class T5Summarizer(context: Context) {
         // Per-article condensation in the map stage. Kept short so all mini-summaries
         // for a cluster fit back under MAX_INPUT_TOKENS for the reduce stage.
         private const val MAX_MINI_SUMMARY_TOKENS = 90
-        private const val MAX_TITLE_TOKENS = 16
+        private const val MAX_TITLE_TOKENS = 24
         private const val NO_REPEAT_NGRAM = 3
         private const val TAG = "T5Summarizer"
     }
@@ -120,6 +120,16 @@ class T5Summarizer(context: Context) {
         return if (end >= 0) text.substring(0, end + 1) else text
     }
 
+    /** Drop the trailing, likely-incomplete word left when title generation stops at the
+     *  token cap before EOS — titles aren't sentences so [trimToLastSentence] can't help.
+     *  Keeps at least one word; strips any dangling punctuation left at the new end. */
+    private fun trimToLastWord(text: String): String {
+        val trimmed = text.trimEnd()
+        val lastSpace = trimmed.lastIndexOf(' ')
+        if (lastSpace <= 0) return trimmed
+        return trimmed.substring(0, lastSpace).trimEnd().trimEnd(',', ';', ':', '-', '—')
+    }
+
     private fun buildInput(articles: List<Article>, bodies: Map<String, String>): String {
         // T5 takes the "summarize:" instruction once at the start, not per segment.
         // Split the input budget fairly across articles so one long body can't crowd the
@@ -193,7 +203,11 @@ class T5Summarizer(context: Context) {
             // generatedIds[0] is the decoder start token (PAD_ID); skip it so decode()
             // doesn't break immediately on the leading PAD and return an empty string.
             val decoded = stripInstructionEcho(tokenizer.decode(generatedIds.drop(1).toLongArray()))
-            if (trimToSentence && hitTokenCap) trimToLastSentence(decoded) else decoded
+            when {
+                !hitTokenCap -> decoded                       // EOS reached: output is complete
+                trimToSentence -> trimToLastSentence(decoded) // summaries: drop partial sentence
+                else -> trimToLastWord(decoded)               // titles: drop partial trailing word
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Summarization failed: ${e.message}")
             "Summary unavailable."

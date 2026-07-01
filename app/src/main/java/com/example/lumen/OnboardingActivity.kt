@@ -60,7 +60,7 @@ fun InterestsScreen(editMode: Boolean = false) {
     var isLoading by remember { mutableStateOf(false) }
 
     val topics = listOf("TECHNOLOGY", "SCIENCE", "POLITICS", "WORLD", "BUSINESS", "HEALTH", "CLIMATE", "SPORT")
-    val sources = listOf("The New York Times", "The Guardian", "BBC News", "Reuters", "Der Spiegel", "Politico", "Al Jazeera")
+    val sources = listOf("The New York Times", "The Guardian", "Der Spiegel")
 
     Column(
         modifier = Modifier

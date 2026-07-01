@@ -39,6 +39,10 @@ interface ArticleDao {
     @Query("SELECT * FROM articles WHERE url = :url LIMIT 1")
     suspend fun getByUrl(url: String): Article?
 
+    // Notifications — count unread articles newer than the given timestamp
+    @Query("SELECT COUNT(*) FROM articles WHERE isRead = 0 AND publishedAt > :since")
+    suspend fun countUnreadSince(since: Long): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(article: Article)
 

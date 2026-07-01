@@ -322,7 +322,7 @@ class NewsRepository(
             val story = followedStoryDao.getStoryById(storyId) ?: continue
             val bodies = mutableMapOf<String, String>()
             for (article in matchedArticles) {
-                val body = articleFetcher.fetchBody(article.url, article.title)
+                val body = articleFetcher.fetchBody(article)
                 if (!body.isNullOrBlank()) bodies[article.url] = body
             }
             val updateText = t5.summarizeWithBodies(matchedArticles, bodies)

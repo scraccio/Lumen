@@ -1,6 +1,7 @@
 package com.example.lumen.network
 
 import android.util.Log
+import com.example.lumen.data.model.Article
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
@@ -9,6 +10,11 @@ class ArticleFetcher {
 
     private val GUARDIAN_API_KEY = com.example.lumen.BuildConfig.GUARDIAN_API_KEY
     private val NYT_API_KEY = com.example.lumen.BuildConfig.NYT_API_KEY
+
+    /** Prefers body text captured at fetch time (e.g. the NYT abstract) and only falls
+     *  back to a live URL fetch for sources scraped lazily (Guardian, Spiegel). */
+    suspend fun fetchBody(article: Article): String? =
+        article.body?.takeIf { it.isNotBlank() } ?: fetchBody(article.url, article.title)
 
     suspend fun fetchBody(url: String, title: String? = null): String? {
         return when {

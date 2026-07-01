@@ -30,6 +30,10 @@ object ArticleMapper {
             topic = nytArticle.section_name ?: "General",
             publishedAt = parseNytDate(nytArticle.pub_date),
             imageUrl = thumbnail,
+            // NYT full text is unobtainable (by-URL API returns 0 docs, page scrape is
+            // 403-blocked). The abstract delivered with the feed/search response is the
+            // only reliable body, and it arrives correctly paired with this web_url.
+            body = nytArticle.abstract?.takeIf { it.isNotBlank() },
             fetchedAt = System.currentTimeMillis()
         )
     }

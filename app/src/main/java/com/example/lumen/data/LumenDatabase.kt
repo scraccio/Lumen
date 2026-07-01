@@ -15,7 +15,7 @@ import com.example.lumen.data.model.UserPrefs
 
 @Database(
     entities = [Article::class, UserPrefs::class, FollowedStory::class, FollowedStoryUpdate::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class LumenDatabase : RoomDatabase() {

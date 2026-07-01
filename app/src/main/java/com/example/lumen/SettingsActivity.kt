@@ -2,11 +2,18 @@ package com.example.lumen
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import com.example.lumen.R
+import com.example.lumen.notifications.NotificationScheduler
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -56,8 +63,33 @@ fun SettingsScreen() {
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("user_settings", Context.MODE_PRIVATE)
 
-    var notifications by remember { mutableStateOf(true) }
+    var notifications by remember {
+        mutableStateOf(prefs.getBoolean(NotificationScheduler.KEY_ENABLED, true))
+    }
     var biasMeter by remember { mutableStateOf(prefs.getBoolean("bias_meter_enabled", true)) }
+
+    fun persistNotifications(enabled: Boolean) {
+        prefs.edit().putBoolean(NotificationScheduler.KEY_ENABLED, enabled).apply()
+        notifications = enabled
+        if (enabled) NotificationScheduler.enable(context)
+        else NotificationScheduler.disable(context)
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted -> persistNotifications(granted) }
+
+    fun onNotificationsToggled(enabled: Boolean) {
+        if (enabled &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            persistNotifications(enabled)
+        }
+    }
 
     val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
@@ -108,7 +140,7 @@ fun SettingsScreen() {
         SettingsSwitchRow(
             title = "Notifications",
             checked = notifications,
-            onCheckedChange = { notifications = it }
+            onCheckedChange = { onNotificationsToggled(it) }
         )
 
         SettingsSwitchRow(
